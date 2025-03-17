@@ -21,7 +21,6 @@
         const colores = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff]; // Colores disponibles
         let colorIndex = 0;
 
-        // 1. Configurar escena
         function init() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.001, 100);
@@ -29,25 +28,37 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
-            // 2. Controles de cámara
+            // Controles de cámara
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.minDistance = 0.01;
             controls.maxDistance = 0.5;
 
-            // 3. Posición inicial de la cámara
+            // Posición inicial de la cámara
             camera.position.set(1, 10.2, 10.8);
             camera.lookAt(0, 0, 0);
 
-            // 4. Luces mejoradas
-            const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+            // ⭐ MEJORA DE LUCES ⭐
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
             scene.add(ambientLight);
 
             const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
             directionalLight.position.set(5, 10, 5);
             scene.add(directionalLight);
 
-            // 5. Cargar modelo GLTF
+            const bottomLight = new THREE.DirectionalLight(0xffffff, 1);
+            bottomLight.position.set(-5, -10, -5); // Luz desde abajo
+            scene.add(bottomLight);
+
+            const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.2);
+            scene.add(hemisphereLight);
+
+            // 💡 Luz trasera agregada 💡
+            const backLight = new THREE.DirectionalLight(0xffffff, 1.5);
+            backLight.position.set(-5, 5, -5); // Desde atrás y arriba
+            scene.add(backLight);
+
+            // Cargar modelo GLTF
             const loader = new THREE.GLTFLoader();
             loader.load('models/beato2.gltf', function(gltf) {
                 model = gltf.scene;
@@ -62,15 +73,15 @@
                 });
             });
 
-            // 6. Agregar evento de clic para cambiar color del chasis
+            // Evento de clic para cambiar color del chasis
             window.addEventListener("click", () => {
                 if (chasisMaterial) {
                     chasisMaterial.color.setHex(colores[colorIndex]);
-                    colorIndex = (colorIndex + 1) % colores.length; // Ciclo entre colores
+                    colorIndex = (colorIndex + 1) % colores.length;
                 }
             });
 
-            // 7. Ajustar al redimensionar pantalla
+            // Ajustar tamaño al cambiar la ventana
             window.addEventListener('resize', () => {
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
@@ -80,7 +91,6 @@
             animate();
         }
 
-        // Animación
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
@@ -92,3 +102,4 @@
 
 </body>
 </html>
+
