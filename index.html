@@ -34,7 +34,7 @@
 
     <script>
         let scene, camera, renderer, controls;
-        let model, chasisMaterial;
+        let model, chasisMaterial, etiquetaMaterial;
         const colores = {
             "Verde": "#1F7A1F", "Amarillo": "#FFD700", "Azul": "#0077FF",
             "Blanco": "#F5F5F5", "Naranja": "#FF7300", "Morado": "#6A0DAD",
@@ -55,27 +55,41 @@
 
             camera.position.set(0, 1, 2);
 
-            // 🔹 Iluminación estilo estudio 🔹
-            const ambientLight = new THREE.AmbientLight(0xffffff, 2.0);
+            // 🔹 Iluminación mejorada 🔹
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
             scene.add(ambientLight);
 
-            const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
-            keyLight.position.set(5, 5, 5);
-            scene.add(keyLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            directionalLight.position.set(3, 5, 4);
+            scene.add(directionalLight);
 
-            const fillLight = new THREE.DirectionalLight(0xffffff, 1.5);
-            fillLight.position.set(-5, 3, 5);
-            scene.add(fillLight);
+            const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
+            hemiLight.position.set(0, 5, 0);
+            scene.add(hemiLight);
 
-            const rimLight = new THREE.DirectionalLight(0xffffff, 2.0);
-            rimLight.position.set(0, 5, -5);
-            scene.add(rimLight);
+            // 🔹 Luces laterales y debajo del modelo 🔹
+            const pointLight1 = new THREE.PointLight(0xffffff, 1.0);
+            pointLight1.position.set(2, 3, 2);
+            scene.add(pointLight1);
 
-            // 🔹 Cargar HDRI 🔹
-            const rgbeLoader = new THREE.RGBELoader();
-            rgbeLoader.load("tu_imagen_hdr.hdr", function (texture) {
-                texture.mapping = THREE.EquirectangularReflectionMapping;
-                scene.environment = texture;
+            const pointLight2 = new THREE.PointLight(0xffffff, 1.0);
+            pointLight2.position.set(-2, 3, -2);
+            scene.add(pointLight2);
+
+            const pointLight3 = new THREE.PointLight(0xffffff, 1.2);
+            pointLight3.position.set(0, -2, 2); // Aumenté la intensidad
+            scene.add(pointLight3);
+
+            // 🔹 Cargar textura de la etiqueta 🔹
+            const textureLoader = new THREE.TextureLoader();
+            const etiquetaTexture = textureLoader.load('ruta_a_la_textura.png');
+            etiquetaTexture.encoding = THREE.sRGBEncoding;
+
+            etiquetaMaterial = new THREE.MeshStandardMaterial({
+                map: etiquetaTexture,
+                transparent: true,
+                alphaTest: 0.5,
+                side: THREE.DoubleSide,
             });
 
             // 🔹 Cargar modelo GLTF 🔹
@@ -88,11 +102,19 @@
                 model.traverse((child) => {
                     if (child.isMesh) {
                         child.material.needsUpdate = true;
+
                         if (child.material.name === "chasis rosa") {
                             chasisMaterial = child.material;
                             chasisMaterial.roughness = 0.5;
                             chasisMaterial.metalness = 1;
-                            chasisMaterial.envMapIntensity = 1.2;
+                            chasisMaterial.envMapIntensity = 0.8;
+                            if (chasisMaterial.map) {
+                                chasisMaterial.map.encoding = THREE.sRGBEncoding;
+                                chasisMaterial.map.needsUpdate = true;
+                            }
+                        }
+                        if (child.material.name.includes("etiqueta")) {
+                            child.material = etiquetaMaterial;
                         }
                     }
                 });
@@ -133,3 +155,4 @@
     </script>
 </body>
 </html>
+
