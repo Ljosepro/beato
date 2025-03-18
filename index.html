@@ -34,7 +34,7 @@
 
     <script>
         let scene, camera, renderer, controls;
-        let model, chasisMaterial, etiquetaMaterial;
+        let model, chasisMaterial;
         const colores = {
             "Verde": "#1F7A1F", "Amarillo": "#FFD700", "Azul": "#0077FF",
             "Blanco": "#F5F5F5", "Naranja": "#FF7300", "Morado": "#6A0DAD",
@@ -46,51 +46,43 @@
             camera = new THREE.PerspectiveCamera(15, window.innerWidth / window.innerHeight, 0.1, 100);
             renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 2.2; // 🔹 Exposición aumentada para evitar zonas oscuras
             document.body.appendChild(renderer.domElement);
 
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.minDistance = 2;
             controls.maxDistance = 3;
-
             camera.position.set(0, 1, 2);
 
-            // 🔹 Iluminación mejorada 🔹
-            const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+            // 🔹 Cargar HDRI 🔹
+            const rgbeLoader = new THREE.RGBELoader();
+            rgbeLoader.load("tu_hdri.hdr", function (texture) {
+                texture.mapping = THREE.EquirectangularReflectionMapping;
+                scene.environment = texture;
+                scene.background = texture; // Opcional
+            });
+
+            // 🔹 Luces adicionales 🔹
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.5); // 🔹 Luz ambiental más fuerte
             scene.add(ambientLight);
 
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
-            directionalLight.position.set(3, 5, 4);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
+            directionalLight.position.set(5, 5, 5);
             scene.add(directionalLight);
 
-            const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
-            hemiLight.position.set(0, 5, 0);
-            scene.add(hemiLight);
-
-            // 🔹 Luces laterales y debajo del modelo 🔹
-            const pointLight1 = new THREE.PointLight(0xffffff, 1.0);
-            pointLight1.position.set(2, 3, 2);
+            const pointLight1 = new THREE.PointLight(0xffffff, 1.5, 10);
+            pointLight1.position.set(0, 3, 2);
             scene.add(pointLight1);
 
-            const pointLight2 = new THREE.PointLight(0xffffff, 1.0);
-            pointLight2.position.set(-2, 3, -2);
+            const pointLight2 = new THREE.PointLight(0xffffff, 1.5, 10);
+            pointLight2.position.set(-3, 2, -2);
             scene.add(pointLight2);
 
-            const pointLight3 = new THREE.PointLight(0xffffff, 1.2);
-            pointLight3.position.set(0, -2, 2); // Aumenté la intensidad
+            const pointLight3 = new THREE.PointLight(0xffffff, 1.2, 10);
+            pointLight3.position.set(3, -2, 2);
             scene.add(pointLight3);
-
-            // 🔹 Cargar textura de la etiqueta 🔹
-            const textureLoader = new THREE.TextureLoader();
-            const etiquetaTexture = textureLoader.load('ruta_a_la_textura.png');
-            etiquetaTexture.encoding = THREE.sRGBEncoding;
-
-            etiquetaMaterial = new THREE.MeshStandardMaterial({
-                map: etiquetaTexture,
-                transparent: true,
-                alphaTest: 0.5,
-                side: THREE.DoubleSide,
-            });
 
             // 🔹 Cargar modelo GLTF 🔹
             const loader = new THREE.GLTFLoader();
@@ -105,16 +97,9 @@
 
                         if (child.material.name === "chasis rosa") {
                             chasisMaterial = child.material;
-                            chasisMaterial.roughness = 0.5;
-                            chasisMaterial.metalness = 1;
-                            chasisMaterial.envMapIntensity = 0.8;
-                            if (chasisMaterial.map) {
-                                chasisMaterial.map.encoding = THREE.sRGBEncoding;
-                                chasisMaterial.map.needsUpdate = true;
-                            }
-                        }
-                        if (child.material.name.includes("etiqueta")) {
-                            child.material = etiquetaMaterial;
+                            chasisMaterial.roughness = 0.3;
+                            chasisMaterial.metalness = 0.9;
+                            chasisMaterial.envMapIntensity = 2.0;
                         }
                     }
                 });
@@ -155,4 +140,3 @@
     </script>
 </body>
 </html>
-
