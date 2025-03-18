@@ -25,60 +25,60 @@
     </style>
 </head>
 <body>
-
     <div id="colorPicker"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
 
     <script>
         let scene, camera, renderer, controls;
-        let model, chasisMaterial, knobsMaterial, knobsLineMaterial, botonesMaterial;
+        let model, chasisMaterial;
         const colores = {
-            "Verde": "#1F7A1F",
-            "Amarillo": "#FFD700",
-            "Azul": "#0077FF",
-            "Blanco": "#F5F5F5",
-            "Naranja": "#FF7300",
-            "Morado": "#6A0DAD",
-            "Rojo": "#D00000",
-            "Negro": "#1C1C1C",
-            "Rosa": "#FF007F",
-            "Gris": "#808080"
+            "Verde": "#1F7A1F", "Amarillo": "#FFD700", "Azul": "#0077FF",
+            "Blanco": "#F5F5F5", "Naranja": "#FF7300", "Morado": "#6A0DAD",
+            "Rojo": "#D00000", "Negro": "#1C1C1C", "Rosa": "#FF007F", "Gris": "#808080"
         };
 
         function init() {
             scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(10, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera = new THREE.PerspectiveCamera(15, window.innerWidth / window.innerHeight, 0.1, 100);
             renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
-            // Controles de cámara
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.minDistance = 2;
             controls.maxDistance = 3;
-            controls.enableRotate = true;
-            controls.enableZoom = true;
 
             camera.position.set(0, 1, 2);
-            camera.lookAt(0, 0, 0);
 
-            // Luces
-            const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+            // 🔹 Iluminación estilo estudio 🔹
+            const ambientLight = new THREE.AmbientLight(0xffffff, 2.0);
             scene.add(ambientLight);
 
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
-            directionalLight.position.set(3, 5, 4);
-            scene.add(directionalLight);
+            const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
+            keyLight.position.set(5, 5, 5);
+            scene.add(keyLight);
 
-            const backLight = new THREE.DirectionalLight(0xffffff, 1);
-            backLight.position.set(-2, 3, -5);
-            scene.add(backLight);
+            const fillLight = new THREE.DirectionalLight(0xffffff, 1.5);
+            fillLight.position.set(-5, 3, 5);
+            scene.add(fillLight);
 
-            // Cargar modelo GLTF
+            const rimLight = new THREE.DirectionalLight(0xffffff, 2.0);
+            rimLight.position.set(0, 5, -5);
+            scene.add(rimLight);
+
+            // 🔹 Cargar HDRI 🔹
+            const rgbeLoader = new THREE.RGBELoader();
+            rgbeLoader.load("tu_imagen_hdr.hdr", function (texture) {
+                texture.mapping = THREE.EquirectangularReflectionMapping;
+                scene.environment = texture;
+            });
+
+            // 🔹 Cargar modelo GLTF 🔹
             const loader = new THREE.GLTFLoader();
             loader.load('models/beato2.gltf', function(gltf) {
                 model = gltf.scene;
@@ -88,32 +88,26 @@
                 model.traverse((child) => {
                     if (child.isMesh) {
                         child.material.needsUpdate = true;
-                        child.material.map && (child.material.map.minFilter = THREE.LinearFilter);
-                        
                         if (child.material.name === "chasis rosa") {
                             chasisMaterial = child.material;
-                        } else if (child.material.name === "knobs faders.001") {
-                            knobsMaterial = child.material;
-                        } else if (child.material.name === "Material.002") {
-                            knobsLineMaterial = child.material;
-                        } else if (child.material.name === "amarillos.001") {
-                            botonesMaterial = child.material;
+                            chasisMaterial.roughness = 0.5;
+                            chasisMaterial.metalness = 1;
+                            chasisMaterial.envMapIntensity = 1.2;
                         }
                     }
                 });
             });
 
-            // Crear la selección de colores en la interfaz
+            // 🔹 Generar botones de selección de color 🔹
             const colorPicker = document.getElementById("colorPicker");
             Object.entries(colores).forEach(([nombre, color]) => {
                 const colorBox = document.createElement("div");
                 colorBox.classList.add("color-box");
                 colorBox.style.background = color;
-                colorBox.addEventListener("click", () => cambiarColor(nombre, color));
+                colorBox.addEventListener("click", () => cambiarColor(color));
                 colorPicker.appendChild(colorBox);
             });
 
-            // Ajustar tamaño de pantalla
             window.addEventListener('resize', () => {
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
@@ -123,20 +117,9 @@
             animate();
         }
 
-        function cambiarColor(nombre, color) {
+        function cambiarColor(color) {
             if (chasisMaterial) {
                 chasisMaterial.color.set(color);
-            }
-
-            // Si el chasis es negro, cambiar los knobs y los botones
-            if (nombre === "Negro") {
-                if (knobsMaterial) knobsMaterial.color.set("#FFFFFF"); // Knobs pasan a blanco
-                if (knobsLineMaterial) knobsLineMaterial.color.set("#000000"); // Líneas pasan a negro
-                if (botonesMaterial) botonesMaterial.color.set("#FFFFFF"); // Botones también a blanco
-            } else {
-                if (knobsMaterial) knobsMaterial.color.set("#1C1C1C"); // Regresar a negro
-                if (knobsLineMaterial) knobsLineMaterial.color.set("#F5F5F5"); // Regresar a blanco
-                if (botonesMaterial) botonesMaterial.color.set("#1C1C1C"); // Botones regresan a negro
             }
         }
 
@@ -148,6 +131,5 @@
 
         init();
     </script>
-
 </body>
 </html>
