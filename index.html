@@ -34,7 +34,7 @@
 
     <script>
         let scene, camera, renderer, controls;
-        let model, chasisMaterial;
+        let model, chasisMaterial, knobsMaterial, knobsLineMaterial, botonesMaterial;
         const colores = {
             "Verde": "#1F7A1F",
             "Amarillo": "#FFD700",
@@ -89,8 +89,15 @@
                     if (child.isMesh) {
                         child.material.needsUpdate = true;
                         child.material.map && (child.material.map.minFilter = THREE.LinearFilter);
+                        
                         if (child.material.name === "chasis rosa") {
                             chasisMaterial = child.material;
+                        } else if (child.material.name === "knobs faders.001") {
+                            knobsMaterial = child.material;
+                        } else if (child.material.name === "Material.002") {
+                            knobsLineMaterial = child.material;
+                        } else if (child.material.name === "amarillos.001") {
+                            botonesMaterial = child.material;
                         }
                     }
                 });
@@ -102,7 +109,7 @@
                 const colorBox = document.createElement("div");
                 colorBox.classList.add("color-box");
                 colorBox.style.background = color;
-                colorBox.addEventListener("click", () => cambiarColor(color));
+                colorBox.addEventListener("click", () => cambiarColor(nombre, color));
                 colorPicker.appendChild(colorBox);
             });
 
@@ -116,9 +123,20 @@
             animate();
         }
 
-        function cambiarColor(color) {
+        function cambiarColor(nombre, color) {
             if (chasisMaterial) {
                 chasisMaterial.color.set(color);
+            }
+
+            // Si el chasis es negro, cambiar los knobs y los botones
+            if (nombre === "Negro") {
+                if (knobsMaterial) knobsMaterial.color.set("#FFFFFF"); // Knobs pasan a blanco
+                if (knobsLineMaterial) knobsLineMaterial.color.set("#000000"); // Líneas pasan a negro
+                if (botonesMaterial) botonesMaterial.color.set("#FFFFFF"); // Botones también a blanco
+            } else {
+                if (knobsMaterial) knobsMaterial.color.set("#1C1C1C"); // Regresar a negro
+                if (knobsLineMaterial) knobsLineMaterial.color.set("#F5F5F5"); // Regresar a blanco
+                if (botonesMaterial) botonesMaterial.color.set("#1C1C1C"); // Botones regresan a negro
             }
         }
 
@@ -133,5 +151,3 @@
 
 </body>
 </html>
-
-
